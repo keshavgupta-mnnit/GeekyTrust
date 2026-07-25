@@ -12,12 +12,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.presentation.components.NewsItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookmarkScreen(
-    onArticleClick: (String) -> Unit,
+    onArticleClick: (Article) -> Unit,
     viewModel: BookmarkViewModel = hiltViewModel()
 ) {
     val bookmarks by viewModel.bookmarks.collectAsState()
@@ -41,7 +42,7 @@ fun BookmarkScreen(
                     NewsItem(
                         article = article,
                         isBookmarked = true,
-                        onClick = { onArticleClick(article.url) },
+                        onClick = { onArticleClick(article) },
                         onBookmarkClick = { viewModel.onToggleBookmark(article) }
                     )
                 }

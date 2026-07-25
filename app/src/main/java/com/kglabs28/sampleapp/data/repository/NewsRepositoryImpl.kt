@@ -38,11 +38,6 @@ class NewsRepositoryImpl @Inject constructor(
         ).flow
     }
 
-    override suspend fun getNewsArticleById(id: String): Article {
-        return localManager.getNewsArticleById(id)
-    }
-
-
     override suspend fun searchNews(query: String): List<Article> {
         return if (BasicUtils.isNetworkConnected(context)) {
             try {

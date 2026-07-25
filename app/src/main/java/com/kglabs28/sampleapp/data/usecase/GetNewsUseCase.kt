@@ -12,6 +12,4 @@ class GetNewsUseCase(private val repository: NewsRepository) {
         return repository.getNews()
     }
     suspend fun search(query: String): List<Article> = repository.searchNews(query)
-    
-    suspend fun getById(id: String): Article = repository.getNewsArticleById(id)
 }

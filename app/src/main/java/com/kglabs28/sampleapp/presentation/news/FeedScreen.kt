@@ -15,13 +15,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.presentation.components.ErrorScreen
 import com.kglabs28.sampleapp.presentation.components.NewsItem
 import com.kglabs28.sampleapp.presentation.components.SearchBar
 
 @Composable
 fun FeedScreen(
-    onArticleClick: (String) -> Unit,
+    onArticleClick: (Article) -> Unit,
     viewModel: NewsViewModel = hiltViewModel()
 ) {
     val news = viewModel.news.collectAsLazyPagingItems()
@@ -57,8 +58,8 @@ fun FeedScreen(
                         NewsItem(
                             article = article,
                             isBookmarked = isBookmarked,
-                            onClick = { onArticleClick(article.id) }, // Pass ID to Detail Screen (if needed) or article.url
-                            onBookmarkClick = { viewModel.onToggleBookmark(article) }
+                        onClick = { onArticleClick(article) },
+                        onBookmarkClick = { viewModel.onToggleBookmark(article) }
                         )
                     }
                 }

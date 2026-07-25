@@ -11,9 +11,6 @@ class LocalManagerImpl @Inject constructor(private val database: NewsDatabase) :
 
     override fun pagingSource() = dao.pagingSource()
 
-    override suspend fun getNewsArticleById(id: String) = dao.getArticleById(id)
-
-
     override suspend fun insertArticles(articles: List<Article>) {
         BasicUtils.log("NewsApp", "LocalManagerImpl :: Saving ${articles.size} articles in db")
         dao.insertArticles(articles)

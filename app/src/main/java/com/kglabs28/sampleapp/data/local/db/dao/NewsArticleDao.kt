@@ -21,9 +21,6 @@ interface NewsArticleDao {
     @Upsert
     suspend fun upsertArticle(article: Article)
 
-    @Query("SELECT * FROM articles WHERE id = :id")
-    suspend fun getArticleById(id: String): Article
-
 
     @Query("SELECT * FROM articles WHERE title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%' ORDER BY lastUpdated DESC")
     suspend fun searchLocalFeed(query: String): List<Article>

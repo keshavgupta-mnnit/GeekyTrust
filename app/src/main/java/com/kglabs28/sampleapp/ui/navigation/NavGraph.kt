@@ -11,14 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
+import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.presentation.bookmark.BookmarkScreen
 import com.kglabs28.sampleapp.presentation.detail.DetailScreen
 import com.kglabs28.sampleapp.presentation.news.FeedScreen
+import kotlin.reflect.typeOf
 
 @Composable
 fun MainScreen(navController: NavHostController) {
@@ -27,15 +28,19 @@ fun MainScreen(navController: NavHostController) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
             
-            // Only show bottom bar on Feed and Bookmarks screens
-            if (currentDestination?.route == Route.Feed.route || currentDestination?.route == Route.Bookmarks.route) {
+            // Show bottom bar on Feed and Bookmarks screens
+            // Note: with type-safe nav, the route name usually matches the FQN of the class
+            val isFeed = currentDestination?.hierarchy?.any { it.route?.contains("Feed") == true } == true
+            val isBookmark = currentDestination?.hierarchy?.any { it.route?.contains("Bookmarks") == true } == true
+
+            if (isFeed || isBookmark) {
                 NavigationBar {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Home, contentDescription = null) },
                         label = { Text("Feed") },
-                        selected = currentDestination.hierarchy.any { it.route == Route.Feed.route },
+                        selected = isFeed,
                         onClick = {
-                            navController.navigate(Route.Feed.route) {
+                            navController.navigate(Route.Feed) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -47,9 +52,9 @@ fun MainScreen(navController: NavHostController) {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Bookmark, contentDescription = null) },
                         label = { Text("Bookmarks") },
-                        selected = currentDestination.hierarchy.any { it.route == Route.Bookmarks.route },
+                        selected = isBookmark,
                         onClick = {
-                            navController.navigate(Route.Bookmarks.route) {
+                            navController.navigate(Route.Bookmarks) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -64,26 +69,25 @@ fun MainScreen(navController: NavHostController) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Route.Feed.route,
+            startDestination = Route.Feed,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Route.Feed.route) {
+            composable<Route.Feed> {
                 FeedScreen(
-                    onArticleClick = { url ->
-                        navController.navigate(Route.Detail.createRoute(url))
+                    onArticleClick = { article ->
+                        navController.navigate(Route.Detail(article))
                     }
                 )
             }
-            composable(Route.Bookmarks.route) {
+            composable<Route.Bookmarks> {
                 BookmarkScreen(
-                    onArticleClick = { url ->
-                        navController.navigate(Route.Detail.createRoute(url))
+                    onArticleClick = { article ->
+                        navController.navigate(Route.Detail(article))
                     }
                 )
             }
-            composable(
-                route = Route.Detail.route,
-                arguments = listOf(navArgument("url") { type = NavType.StringType })
+            composable<Route.Detail>(
+                typeMap = mapOf(typeOf<Article>() to Route.ArticleNavType)
             ) {
                 DetailScreen(
                     onBackClick = { navController.popBackStack() }

@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocalManager {
     fun pagingSource(): PagingSource<Int, Article>
-    suspend fun getNewsArticleById(id: String): Article
     suspend fun insertArticles(articles: List<Article>)
     suspend fun enforceCacheLimit(limit: Int)
     suspend fun updateBookmarkStatus(article: Article)
