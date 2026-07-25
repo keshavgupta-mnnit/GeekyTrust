@@ -52,10 +52,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideNewsRepository(
+        app: Application,
         localManager: LocalManager,
         remoteManager: RemoteManager
     ): NewsRepository {
-        return NewsRepositoryImpl(localManager, remoteManager)
+        return NewsRepositoryImpl(app, localManager, remoteManager)
     }
 
     @Provides

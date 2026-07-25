@@ -17,6 +17,10 @@ class NewsRemoteMediator(
     private val localManager: LocalManager
 ) : RemoteMediator<Int, Article>() {
 
+    companion object {
+        private var lastRequestTime = 0L
+    }
+
     override suspend fun initialize(): InitializeAction {
         return InitializeAction.LAUNCH_INITIAL_REFRESH
     }
@@ -26,50 +30,49 @@ class NewsRemoteMediator(
         state: PagingState<Int, Article>
     ): MediatorResult {
         return try {
-            var fromDateIso: String? = null
-            var toDateIso: String? = null
+            // GNews API free tier has a strict limit of 1 request per second.
+            // Paging 3 often triggers APPEND immediately after REFRESH.
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastRequestTime
+            if (timeSinceLastRequest < 1500) {
+                val delayTime = 1500 - timeSinceLastRequest
+                BasicUtils.log("NewsApp", "NewsRemoteMediator :: Rate limiting - delaying for ${delayTime}ms")
+                kotlinx.coroutines.delay(delayTime)
+            }
+            lastRequestTime = System.currentTimeMillis()
 
-            when (loadType) {
+            val freshArticles = when (loadType) {
                 LoadType.REFRESH -> {
                     BasicUtils.log("NewsApp", "NewsRemoteMediator :: REFRESH")
                     val newestTimestamp = localManager.getLatestTimestamp()
-                    if (newestTimestamp != null) {
-                        fromDateIso = BasicUtils.parseTimestampLongToString(newestTimestamp)
-                    }
+                    val fromDateIso = newestTimestamp?.let { BasicUtils.parseTimestampLongToString(it) }
+                    BasicUtils.log("NewsApp", "NewsRemoteMediator :: Loading latest news since $fromDateIso")
+                    remoteManager.getLatestNews(fromDateIso)
                 }
 
                 LoadType.PREPEND -> {
-                    BasicUtils.log("NewsApp", "NewsRemoteMediator :: PREPEND")
                     return MediatorResult.Success(endOfPaginationReached = true)
                 }
 
                 LoadType.APPEND -> {
                     BasicUtils.log("NewsApp", "NewsRemoteMediator :: APPEND")
                     val lastItem = state.lastItemOrNull()
+                    
+                    // If lastItem is null, it might be an initial load or empty DB.
+                    // We can't fetch "more" if we don't know where the "end" is.
                     if (lastItem == null) {
-                        return MediatorResult.Success(endOfPaginationReached = true)
+                        return MediatorResult.Success(endOfPaginationReached = false)
                     }
 
-                    toDateIso = BasicUtils.parseTimestampLongToString(lastItem.lastUpdated)
+                    val toDateIso = BasicUtils.parseTimestampLongToString(lastItem.lastUpdated)
+                    BasicUtils.log("NewsApp", "NewsRemoteMediator :: Loading older news before $toDateIso")
+                    remoteManager.fetchNews(toDateIso)
                 }
-            }
-
-            val freshArticles = if (toDateIso != null) {
-                BasicUtils.log("NewsApp", "NewsRemoteMediator :: Loading older news before $toDateIso")
-                remoteManager.fetchNews(toDateIso)
-            } else {
-                BasicUtils.log("NewsApp", "NewsRemoteMediator :: Loading latest news since $fromDateIso")
-                remoteManager.getLatestNews(fromDateIso)
             }
 
             localManager.insertArticles(freshArticles)
 
-            val endOfPagination = if (loadType == LoadType.REFRESH) {
-                false
-            } else {
-                freshArticles.isEmpty()
-            }
-
+            val endOfPagination = freshArticles.isEmpty() && loadType == LoadType.APPEND
             MediatorResult.Success(endOfPaginationReached = endOfPagination)
 
         } catch (e: IOException) {

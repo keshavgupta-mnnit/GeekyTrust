@@ -23,10 +23,16 @@ class LocalManagerImpl @Inject constructor(private val database: NewsDatabase) :
 
     override suspend fun enforceCacheLimit(limit: Int) = dao.enforceCacheLimit(limit)
 
-    override suspend fun updateBookmarkStatus(id: String, timestamp: Long?) =
-        dao.updateBookmarkStatus(id, timestamp)
-
-    override suspend fun searchLocalFeed(query: String) = dao.searchLocalFeed(query)
+    override suspend fun updateBookmarkStatus(article: Article) {
+        BasicUtils.log("NewsApp", "LocalManagerImpl :: updateBookmarkStatus for id: ${article.id}")
+        val newTimestamp = if (article.bookmarkedAt != null) null else System.currentTimeMillis()
+        dao.upsertArticle(article.copy(bookmarkedAt = newTimestamp))
+    }
+    
+    override suspend fun searchLocalFeed(query: String): List<Article>{
+        BasicUtils.log("NewsApp", "LocalManagerImpl :: searchLocalFeed query: $query")
+        return dao.searchLocalFeed(query)  
+    } 
 
     override fun getBookmarkedArticles(): Flow<List<Article>> {
         return dao.getBookmarkedArticles()

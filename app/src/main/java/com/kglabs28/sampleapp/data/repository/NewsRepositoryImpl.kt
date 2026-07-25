@@ -1,5 +1,6 @@
 package com.kglabs28.sampleapp.data.repository
 
+import android.content.Context
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -8,11 +9,13 @@ import com.kglabs28.sampleapp.data.local.LocalManager
 import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.data.remote.RemoteManager
 import com.kglabs28.sampleapp.utils.BasicUtils
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 @OptIn(ExperimentalPagingApi::class)
 class NewsRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val localManager: LocalManager,
     private val remoteManager: RemoteManager
 
@@ -24,7 +27,8 @@ class NewsRepositoryImpl @Inject constructor(
             config = PagingConfig(
                 pageSize = 10,
                 prefetchDistance = 3, // Start fetching local/remote earlier to ensure smooth scroll
-                enablePlaceholders = false
+                enablePlaceholders = false,
+                initialLoadSize = 10 // Avoid triggering APPEND immediately on fresh launch
             ),
             remoteMediator = NewsRemoteMediator(
                 remoteManager = remoteManager,
@@ -40,7 +44,7 @@ class NewsRepositoryImpl @Inject constructor(
 
 
     override suspend fun searchNews(query: String): List<Article> {
-        return if (BasicUtils.isNetworkConnected()) {
+        return if (BasicUtils.isNetworkConnected(context)) {
             try {
                 remoteManager.searchNews(query)
             } catch (e: Exception) {
@@ -52,9 +56,7 @@ class NewsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateBookmark(article: Article) {
-        val isCurrentlyBookmarked = article.bookmarkedAt != null
-        val newTimestamp = if (isCurrentlyBookmarked) null else System.currentTimeMillis()
-        localManager.updateBookmarkStatus(article.id, newTimestamp)
+        localManager.updateBookmarkStatus(article)
     }
 
     suspend fun enforceCacheLimit(limit: Int) {

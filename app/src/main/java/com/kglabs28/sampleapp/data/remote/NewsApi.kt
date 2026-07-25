@@ -12,7 +12,7 @@ interface NewsApi {
         @Query("category") category: String = AppConstants.NEWS_CATEGORY,
         @Query("max") max: Int = 10,
         @Query("lang") lang: String = "en",
-        @Query("to") latestTimeStamp: String = ""
+        @Query("from") latestTimeStamp: String = ""
     ): NewsResponse
 
     @GET("top-headlines")
@@ -21,7 +21,7 @@ interface NewsApi {
         @Query("category") category: String = AppConstants.NEWS_CATEGORY,
         @Query("max") max: Int = 10,
         @Query("lang") lang: String = "en",
-        @Query("from") oldestTimeStamp: String
+        @Query("to") oldestTimeStamp: String
     ): NewsResponse
 
     @GET("search")

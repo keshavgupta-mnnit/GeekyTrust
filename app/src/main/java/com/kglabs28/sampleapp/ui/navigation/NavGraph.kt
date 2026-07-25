@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -35,8 +36,11 @@ fun MainScreen(navController: NavHostController) {
                         selected = currentDestination.hierarchy.any { it.route == Route.Feed.route },
                         onClick = {
                             navController.navigate(Route.Feed.route) {
-                                popUpTo(Route.Feed.route) { inclusive = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
@@ -46,7 +50,11 @@ fun MainScreen(navController: NavHostController) {
                         selected = currentDestination.hierarchy.any { it.route == Route.Bookmarks.route },
                         onClick = {
                             navController.navigate(Route.Bookmarks.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
