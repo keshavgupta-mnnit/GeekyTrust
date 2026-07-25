@@ -22,8 +22,7 @@ class LocalManagerImpl @Inject constructor(private val database: NewsDatabase) :
 
     override suspend fun updateBookmarkStatus(article: Article) {
         BasicUtils.log("NewsApp", "LocalManagerImpl :: updateBookmarkStatus for id: ${article.id}")
-        val newTimestamp = if (article.bookmarkedAt != null) null else System.currentTimeMillis()
-        dao.upsertArticle(article.copy(bookmarkedAt = newTimestamp))
+        dao.upsertArticle(article)
     }
     
     override suspend fun searchLocalFeed(query: String): List<Article>{
