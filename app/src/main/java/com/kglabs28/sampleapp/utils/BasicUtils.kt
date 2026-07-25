@@ -1,10 +1,11 @@
 package com.kglabs28.sampleapp.utils
 
+import android.util.Log
+import com.kglabs28.sampleapp.BuildConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import kotlin.text.format
 
 object BasicUtils {
     fun parseTimestampStringToLong(dateString: String): Long {
@@ -26,5 +27,9 @@ object BasicUtils {
 
     fun isNetworkConnected(): Boolean {
         return true
+    }
+
+    fun log(tag:String,message: String) {
+        if(BuildConfig.DEBUG) Log.d(tag,message)
     }
 }

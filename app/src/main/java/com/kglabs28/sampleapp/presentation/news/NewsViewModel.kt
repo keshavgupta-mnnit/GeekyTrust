@@ -10,11 +10,11 @@ import androidx.paging.cachedIn
 import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.data.usecase.BookmarkUseCase
 import com.kglabs28.sampleapp.data.usecase.GetNewsUseCase
+import com.kglabs28.sampleapp.utils.BasicUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @OptIn(FlowPreview::class)
@@ -31,10 +31,8 @@ class NewsViewModel @Inject constructor(
 
     val news = _query.flatMapLatest { query ->
         if (query.isBlank() || query == "news") {
-            // Load paginated data from DB/Network when not searching
             getNewsUseCase.execute()
         } else {
-            // Handle active search by mapping the simple List back to PagingData for the UI
             flow {
                 val results = getNewsUseCase.search(query)
                 emit(PagingData.from(results))
@@ -53,7 +51,7 @@ class NewsViewModel @Inject constructor(
                 .debounce(500L) // Wait half a second after the user stops typing
                 .distinctUntilChanged()
                 .collect { query ->
-                    Timber.d("Searching for: $query")
+                    BasicUtils.log("NewsApp", "Searching for: $query")
                     _query.value = if (query.isBlank()) "news" else query
                 }
         }

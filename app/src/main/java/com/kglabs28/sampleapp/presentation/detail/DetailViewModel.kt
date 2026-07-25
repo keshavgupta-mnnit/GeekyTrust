@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.data.usecase.GetNewsUseCase
+import com.kglabs28.sampleapp.utils.BasicUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,7 +23,7 @@ class DetailViewModel @Inject constructor(
 
     init {
         savedStateHandle.get<String>("url")?.let { url ->
-            Timber.d("Loading article detail for url: $url")
+            BasicUtils.log("NewsApp", "Loading article detail for url: $url")
             viewModelScope.launch {
                 _article.value = getNewsUseCase.getById(url)
             }

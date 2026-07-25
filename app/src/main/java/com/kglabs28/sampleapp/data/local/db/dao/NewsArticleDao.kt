@@ -14,17 +14,19 @@ interface NewsArticleDao {
     @Query("SELECT * FROM articles ORDER BY lastUpdated DESC")
     fun pagingSource(): PagingSource<Int, Article>
 
-    @Query("SELECT * FROM articles WHERE id = :id")
-    suspend fun getArticleById(id: String): Article
-
-    @Query("SELECT * FROM articles WHERE title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%' ORDER BY lastUpdated DESC")
-    suspend fun searchLocalFeed(query: String): List<Article>
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertArticles(articles: List<Article>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertArticle(article: Article)
+
+    @Query("SELECT * FROM articles WHERE id = :id")
+    suspend fun getArticleById(id: String): Article
+
+
+    @Query("SELECT * FROM articles WHERE title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%' ORDER BY lastUpdated DESC")
+    suspend fun searchLocalFeed(query: String): List<Article>
+
 
     @Query("SELECT MAX(lastUpdated) FROM articles WHERE bookmarkedAt IS NULL")
     suspend fun getNewestTimestamp(): Long?

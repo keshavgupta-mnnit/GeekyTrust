@@ -12,7 +12,5 @@ interface LocalManager {
     suspend fun updateBookmarkStatus(id: String, timestamp: Long?)
     suspend fun searchLocalFeed(query: String): List<Article>
     suspend fun getLatestTimestamp(): Long?
-    suspend fun <R> withTransaction(block: suspend () -> R): R
-
     fun getBookmarkedArticles(): Flow<List<Article>>
 }

@@ -1,10 +1,9 @@
 package com.kglabs28.sampleapp.data.local
 
-import androidx.room.withTransaction
 import com.kglabs28.sampleapp.data.local.db.NewsDatabase
 import com.kglabs28.sampleapp.data.local.db.entity.Article
+import com.kglabs28.sampleapp.utils.BasicUtils
 import kotlinx.coroutines.flow.Flow
-import timber.log.Timber
 import javax.inject.Inject
 
 class LocalManagerImpl @Inject constructor(private val database: NewsDatabase) : LocalManager {
@@ -15,8 +14,8 @@ class LocalManagerImpl @Inject constructor(private val database: NewsDatabase) :
     override suspend fun getNewsArticleById(id: String) = dao.getArticleById(id)
 
 
-    override suspend fun insertArticles(articles: List<Article>){
-        Timber.d("Saving ${articles.size} articles in db")
+    override suspend fun insertArticles(articles: List<Article>) {
+        BasicUtils.log("NewsApp", "LocalManagerImpl :: Saving ${articles.size} articles in db")
         dao.insertArticles(articles)
     }
 
@@ -28,12 +27,6 @@ class LocalManagerImpl @Inject constructor(private val database: NewsDatabase) :
         dao.updateBookmarkStatus(id, timestamp)
 
     override suspend fun searchLocalFeed(query: String) = dao.searchLocalFeed(query)
-
-    override suspend fun <R> withTransaction(block: suspend () -> R): R {
-        return database.withTransaction {
-            block()
-        }
-    }
 
     override fun getBookmarkedArticles(): Flow<List<Article>> {
         return dao.getBookmarkedArticles()

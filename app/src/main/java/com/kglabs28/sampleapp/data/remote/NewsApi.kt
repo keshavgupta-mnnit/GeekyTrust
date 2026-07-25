@@ -8,16 +8,16 @@ import retrofit2.http.Query
 interface NewsApi {
     @GET("top-headlines")
     suspend fun getLatestNews(
-        @Query("apiKey") apiKey: String = AppConstants.API_KEY,
+        @Query("apikey") apiKey: String = AppConstants.API_KEY,
         @Query("category") category: String = AppConstants.NEWS_CATEGORY,
         @Query("max") max: Int = 10,
         @Query("lang") lang: String = "en",
         @Query("to") latestTimeStamp: String = ""
     ): NewsResponse
 
-    @GET("search")
+    @GET("top-headlines")
     suspend fun getMoreNews(
-        @Query("apiKey") apiKey: String = AppConstants.API_KEY,
+        @Query("apikey") apiKey: String = AppConstants.API_KEY,
         @Query("category") category: String = AppConstants.NEWS_CATEGORY,
         @Query("max") max: Int = 10,
         @Query("lang") lang: String = "en",

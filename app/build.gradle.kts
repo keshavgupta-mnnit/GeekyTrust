@@ -88,9 +88,6 @@ dependencies {
     // Navigation
     implementation(libs.navigation.compose)
 
-    // Logging
-    implementation(libs.timber)
-
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
