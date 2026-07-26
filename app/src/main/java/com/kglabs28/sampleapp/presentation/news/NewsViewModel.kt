@@ -12,12 +12,13 @@ import com.kglabs28.sampleapp.data.usecase.BookmarkUseCase
 import com.kglabs28.sampleapp.data.usecase.GetNewsUseCase
 import com.kglabs28.sampleapp.utils.BasicUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class NewsViewModel @Inject constructor(
     private val getNewsUseCase: GetNewsUseCase,
@@ -27,35 +28,22 @@ class NewsViewModel @Inject constructor(
     private val _searchQuery = mutableStateOf("")
     val searchQuery: State<String> = _searchQuery
 
-    private val _query = MutableStateFlow("news")
-
-    val news = _query.flatMapLatest { query ->
-        if (query.isBlank() || query == "news") {
-            getNewsUseCase.execute()
-        } else {
-            flow {
-                val results = getNewsUseCase.search(query)
-                emit(PagingData.from(results))
+    // Single source of truth for the news data (Feed or Search)
+    val news = snapshotFlow { _searchQuery.value }
+        .debounce(500L)
+        .distinctUntilChanged()
+        .flatMapLatest { query ->
+            if (query.isBlank()) {
+                getNewsUseCase.execute()
+            } else {
+                BasicUtils.log("NewsApp", "Searching for: $query")
+                flow {
+                    val results = getNewsUseCase.search(query)
+                    emit(PagingData.from(results))
+                }
             }
         }
-    }.cachedIn(viewModelScope)
-
-    // Map to a set of IDs for O(1) fast lookup in the UI
-    val bookmarkedIds = bookmarkUseCase.getAll()
-        .map { bookmarks -> bookmarks.map { it.id }.toSet() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
-
-    init {
-        viewModelScope.launch {
-            snapshotFlow { _searchQuery.value }
-                .debounce(500L) // Wait half a second after the user stops typing
-                .distinctUntilChanged()
-                .collect { query ->
-                    BasicUtils.log("NewsApp", "Searching for: $query")
-                    _query.value = if (query.isBlank()) "news" else query
-                }
-        }
-    }
+        .cachedIn(viewModelScope)
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery

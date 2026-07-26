@@ -41,7 +41,6 @@ fun BookmarkScreen(
                 items(bookmarks) { article ->
                     NewsItem(
                         article = article,
-                        isBookmarked = true,
                         onClick = { onArticleClick(article) },
                         onBookmarkClick = { viewModel.onToggleBookmark(article) }
                     )

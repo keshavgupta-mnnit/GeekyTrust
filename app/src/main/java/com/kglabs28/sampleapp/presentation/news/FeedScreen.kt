@@ -5,9 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,9 +23,8 @@ fun FeedScreen(
     onArticleClick: (Article) -> Unit,
     viewModel: NewsViewModel = hiltViewModel()
 ) {
-    val news = viewModel.news.collectAsLazyPagingItems()
     val searchQuery by viewModel.searchQuery
-    val bookmarkedIds by viewModel.bookmarkedIds.collectAsState()
+    val news = viewModel.news.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
@@ -38,78 +35,75 @@ fun FeedScreen(
             )
         }
     ) { padding ->
-        PullToRefreshBox(
-            modifier = Modifier.padding(padding),
-            isRefreshing = news.loadState.refresh is LoadState.Loading,
-            onRefresh = { news.refresh() }
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // CRITICAL: use news.itemKey { it.id } to prevent UI flickering on refresh!
-                items(
-                    count = news.itemCount,
-                    key = news.itemKey { it.id }
-                ) { index ->
-                    val article = news[index]
-                    if (article != null) {
-                        // Check against ID instead of URL for stability
-                        val isBookmarked = bookmarkedIds.contains(article.id)
-                        NewsItem(
-                            article = article,
-                            isBookmarked = isBookmarked,
-                        onClick = { onArticleClick(article) },
-                        onBookmarkClick = { viewModel.onToggleBookmark(article) }
-                        )
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            when {
+                // 1. Initial Loading State (FullScreen)
+                news.loadState.refresh is LoadState.Loading && news.itemCount == 0 -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
 
-                news.apply {
-                    when {
-                        // Bottom-of-list pagination load (Append)
-                        loadState.append is LoadState.Loading -> {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator()
+                // 2. Initial Error State (FullScreen)
+                news.loadState.refresh is LoadState.Error && news.itemCount == 0 -> {
+                    ErrorScreen(
+                        message = "No Internet Connection or Error Occurred",
+                        onRetry = { news.retry() },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // 3. Empty State (FullScreen)
+                news.loadState.refresh is LoadState.NotLoading && news.loadState.append.endOfPaginationReached && news.itemCount == 0 -> {
+                    ErrorScreen(
+                        message = "No articles found.",
+                        onRetry = { news.refresh() },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // 4. Content State (Main List)
+                else -> {
+                    PullToRefreshBox(
+                        modifier = Modifier.fillMaxSize(),
+                        isRefreshing = news.loadState.refresh is LoadState.Loading, // Only true for pull-to-refresh when itemCount > 0
+                        onRefresh = { news.refresh() }
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(
+                                count = news.itemCount,
+                                key = news.itemKey { it.id }
+                            ) { index ->
+                                val article = news[index]
+                                if (article != null) {
+                                    NewsItem(
+                                        article = article,
+                                        onClick = { onArticleClick(article) },
+                                        onBookmarkClick = { viewModel.onToggleBookmark(article) }
+                                    )
                                 }
                             }
-                        }
-                        // Bottom-of-list error (Append)
-                        loadState.append is LoadState.Error -> {
-                            item {
-                                ErrorScreen(
-                                    message = "Could not load more news.",
-                                    onRetry = { news.retry() },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp)
-                                )
-                            }
-                        }
-                        // Empty list state
-                        loadState.refresh is LoadState.NotLoading && news.itemCount == 0 -> {
-                            item {
-                                ErrorScreen(
-                                    message = "No articles found.",
-                                    onRetry = { news.refresh() },
-                                    modifier = Modifier.fillParentMaxSize()
-                                )
-                            }
-                        }
-                        // Error state on initial load
-                        loadState.refresh is LoadState.Error -> {
-                            if (news.itemCount == 0) {
-                                item {
-                                    ErrorScreen(
-                                        message = "No Internet Connection or Error Occurred",
-                                        onRetry = { news.retry() },
-                                        modifier = Modifier.fillParentMaxSize()
-                                    )
+
+                            // Pagination loading/error items at the bottom
+                            news.apply {
+                                if (loadState.append is LoadState.Loading) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator()
+                                        }
+                                    }
+                                }
+                                if (loadState.append is LoadState.Error) {
+                                    item {
+                                        ErrorScreen(
+                                            message = "Could not load more news.",
+                                            onRetry = { news.retry() },
+                                            modifier = Modifier.fillMaxWidth().padding(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

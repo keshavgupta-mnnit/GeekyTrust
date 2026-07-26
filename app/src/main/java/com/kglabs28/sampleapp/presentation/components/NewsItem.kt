@@ -20,11 +20,11 @@ import com.kglabs28.sampleapp.utils.BasicUtils
 @Composable
 fun NewsItem(
     article: Article,
-    isBookmarked: Boolean,
     onClick: () -> Unit,
     onBookmarkClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isBookmarked = article.bookmarkedAt != null
     Card(
         modifier = modifier
             .fillMaxWidth()
