@@ -96,6 +96,31 @@ class LocalManagerImplTest {
     }
 
     @Test
+    fun `pagingSource should call dao`() {
+        // Given
+        every { dao.pagingSource() } returns mockk()
+
+        // When
+        localManager.pagingSource()
+
+        // Then
+        verify { dao.pagingSource() }
+    }
+
+    @Test
+    fun `enforceCacheLimit should call dao`() = runTest {
+        // Given
+        val limit = 100
+        coEvery { dao.enforceCacheLimit(limit) } returns Unit
+
+        // When
+        localManager.enforceCacheLimit(limit)
+
+        // Then
+        coVerify { dao.enforceCacheLimit(limit) }
+    }
+
+    @Test
     fun `getBookmarkedArticles should return flow from dao`() = runTest {
         // Given
         val articles = listOf(testArticle)

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import app.cash.turbine.test
@@ -74,6 +75,43 @@ class NewsRepositoryImplTest {
         assertEquals(listOf(testArticle), result)
         coVerify { localManager.searchLocalFeed(query) }
         coVerify(exactly = 0) { remoteManager.searchNews(any()) }
+    }
+
+    @Test
+    fun `searchNews should return empty list when remoteManager throws exception`() = runTest {
+        // Given
+        val query = "android"
+        every { BasicUtils.isNetworkConnected(context) } returns true
+        coEvery { remoteManager.searchNews(query) } throws RuntimeException("Network error")
+
+        // When
+        val result = repository.searchNews(query)
+
+        // Then
+        assertEquals(emptyList<Article>(), result)
+        coVerify { remoteManager.searchNews(query) }
+    }
+
+    @Test
+    fun `getNews should return flow from pager`() {
+        // When
+        val result = repository.getNews()
+
+        // Then
+        assertNotNull(result)
+    }
+
+    @Test
+    fun `enforceCacheLimit should call localManager`() = runTest {
+        // Given
+        val limit = 100
+        coEvery { localManager.enforceCacheLimit(limit) } returns Unit
+
+        // When
+        repository.enforceCacheLimit(limit)
+
+        // Then
+        coVerify { localManager.enforceCacheLimit(limit) }
     }
 
     @Test
