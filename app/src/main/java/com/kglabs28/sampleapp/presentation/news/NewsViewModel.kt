@@ -10,14 +10,15 @@ import androidx.paging.cachedIn
 import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.data.usecase.BookmarkUseCase
 import com.kglabs28.sampleapp.data.usecase.GetNewsUseCase
+import com.kglabs28.sampleapp.utils.BasicUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class NewsViewModel @Inject constructor(
     private val getNewsUseCase: GetNewsUseCase,
@@ -27,37 +28,23 @@ class NewsViewModel @Inject constructor(
     private val _searchQuery = mutableStateOf("")
     val searchQuery: State<String> = _searchQuery
 
-    private val _query = MutableStateFlow("news")
-
-    val news = _query.flatMapLatest { query ->
-        if (query.isBlank() || query == "news") {
-            // Load paginated data from DB/Network when not searching
-            getNewsUseCase.execute()
-        } else {
-            // Handle active search by mapping the simple List back to PagingData for the UI
-            flow {
-                val results = getNewsUseCase.search(query)
-                emit(PagingData.from(results))
+    val news = snapshotFlow { _searchQuery.value }
+        .debounce { query ->
+            if (query.isBlank()) 0L else 500L
+        }
+        .distinctUntilChanged()
+        .flatMapLatest { query ->
+            if (query.isBlank()) {
+                getNewsUseCase.execute()
+            } else {
+                BasicUtils.log("NewsApp", "Searching for: $query")
+                flow {
+                    val results = getNewsUseCase.search(query)
+                    emit(PagingData.from(results))
+                }
             }
         }
-    }.cachedIn(viewModelScope)
-
-    // Map to a set of IDs for O(1) fast lookup in the UI
-    val bookmarkedIds = bookmarkUseCase.getAll()
-        .map { bookmarks -> bookmarks.map { it.id }.toSet() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
-
-    init {
-        viewModelScope.launch {
-            snapshotFlow { _searchQuery.value }
-                .debounce(500L) // Wait half a second after the user stops typing
-                .distinctUntilChanged()
-                .collect { query ->
-                    Timber.d("Searching for: $query")
-                    _query.value = if (query.isBlank()) "news" else query
-                }
-        }
-    }
+        .cachedIn(viewModelScope)
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery

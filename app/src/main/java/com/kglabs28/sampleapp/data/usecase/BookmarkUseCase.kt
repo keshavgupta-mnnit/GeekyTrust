@@ -8,6 +8,9 @@ class BookmarkUseCase(private val repository: NewsRepository) {
     fun getAll(): Flow<List<Article>> = repository.getBookmarks()
     
     suspend fun toggle(article: Article) {
-        repository.updateBookmark(article)
+        val updatedArticle = article.copy(
+            bookmarkedAt = if (article.bookmarkedAt == null) System.currentTimeMillis() else null
+        )
+        repository.updateBookmark(updatedArticle)
     }
 }

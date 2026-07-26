@@ -2,8 +2,10 @@ package com.kglabs28.sampleapp.data.local.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "articles")
+@Serializable
 data class Article(
     @PrimaryKey val id: String,
     val title: String,

@@ -1,23 +1,30 @@
 package com.kglabs28.sampleapp.ui.navigation
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.navArgument
+import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.presentation.bookmark.BookmarkScreen
 import com.kglabs28.sampleapp.presentation.detail.DetailScreen
 import com.kglabs28.sampleapp.presentation.news.FeedScreen
+import kotlin.reflect.typeOf
 
 @Composable
 fun MainScreen(navController: NavHostController) {
@@ -26,56 +33,65 @@ fun MainScreen(navController: NavHostController) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
             
-            // Only show bottom bar on Feed and Bookmarks screens
-            if (currentDestination?.route == Route.Feed.route || currentDestination?.route == Route.Bookmarks.route) {
+            val isFeed = currentDestination?.hierarchy?.any { it.route?.contains("Feed") == true } == true
+            val isBookmark = currentDestination?.hierarchy?.any { it.route?.contains("Bookmarks") == true } == true
+
+            if (isFeed || isBookmark) {
                 NavigationBar {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Home, contentDescription = null) },
                         label = { Text("Feed") },
-                        selected = currentDestination.hierarchy.any { it.route == Route.Feed.route },
+                        selected = isFeed,
                         onClick = {
-                            navController.navigate(Route.Feed.route) {
-                                popUpTo(Route.Feed.route) { inclusive = true }
+                            navController.navigate(Route.Feed) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Bookmark, contentDescription = null) },
                         label = { Text("Bookmarks") },
-                        selected = currentDestination.hierarchy.any { it.route == Route.Bookmarks.route },
+                        selected = isBookmark,
                         onClick = {
-                            navController.navigate(Route.Bookmarks.route) {
+                            navController.navigate(Route.Bookmarks) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
                 }
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0.dp)
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Route.Feed.route,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = Route.Feed,
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            composable(Route.Feed.route) {
+            composable<Route.Feed> {
                 FeedScreen(
-                    onArticleClick = { url ->
-                        navController.navigate(Route.Detail.createRoute(url))
+                    onArticleClick = { article ->
+                        navController.navigate(Route.Detail(article))
                     }
                 )
             }
-            composable(Route.Bookmarks.route) {
+            composable<Route.Bookmarks> {
                 BookmarkScreen(
-                    onArticleClick = { url ->
-                        navController.navigate(Route.Detail.createRoute(url))
+                    onArticleClick = { article ->
+                        navController.navigate(Route.Detail(article))
                     }
                 )
             }
-            composable(
-                route = Route.Detail.route,
-                arguments = listOf(navArgument("url") { type = NavType.StringType })
+            composable<Route.Detail>(
+                typeMap = mapOf(typeOf<Article>() to Route.ArticleNavType)
             ) {
                 DetailScreen(
                     onBackClick = { navController.popBackStack() }

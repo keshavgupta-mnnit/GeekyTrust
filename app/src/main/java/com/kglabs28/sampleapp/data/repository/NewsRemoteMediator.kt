@@ -8,8 +8,10 @@ import com.kglabs28.sampleapp.data.local.LocalManager
 import com.kglabs28.sampleapp.data.local.db.entity.Article
 import com.kglabs28.sampleapp.data.remote.RemoteManager
 import com.kglabs28.sampleapp.utils.BasicUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import timber.log.Timber
 import java.io.IOException
 
 @OptIn(ExperimentalPagingApi::class)
@@ -18,57 +20,78 @@ class NewsRemoteMediator(
     private val localManager: LocalManager
 ) : RemoteMediator<Int, Article>() {
 
+    companion object {
+        private var lastRequestTime = 0L
+    }
+
+    override suspend fun initialize(): InitializeAction {
+        return InitializeAction.LAUNCH_INITIAL_REFRESH
+    }
+
     override suspend fun load(
         loadType: LoadType,
         state: PagingState<Int, Article>
-    ): MediatorResult {
-        return try {
-            var fromDateIso: String? = null
-            var toDateIso: String? = null
+    ): MediatorResult = withContext(Dispatchers.IO) {
+        try {
+            val currentTime = System.currentTimeMillis()
+            val timeSinceLastRequest = currentTime - lastRequestTime
+            if (timeSinceLastRequest < 1500) {
+                val delayTime = 1500 - timeSinceLastRequest
+                BasicUtils.log(
+                    "NewsApp",
+                    "NewsRemoteMediator :: Rate limiting - delaying for ${delayTime}ms"
+                )
+                delay(delayTime)
+            }
+            lastRequestTime = System.currentTimeMillis()
 
-            when (loadType) {
+            val freshArticles = when (loadType) {
                 LoadType.REFRESH -> {
+                    BasicUtils.log("NewsApp", "NewsRemoteMediator :: REFRESH")
                     val newestTimestamp = localManager.getLatestTimestamp()
-                    if (newestTimestamp != null) {
-                        fromDateIso = BasicUtils.parseTimestampLongToString(newestTimestamp)
-                    }
+                    val fromDateIso =
+                        newestTimestamp?.let { BasicUtils.parseTimestampLongToString(it) }
+                    BasicUtils.log(
+                        "NewsApp",
+                        "NewsRemoteMediator :: Loading latest news since $fromDateIso"
+                    )
+                    remoteManager.getLatestNews(fromDateIso)
                 }
 
                 LoadType.PREPEND -> {
-                    return MediatorResult.Success(endOfPaginationReached = true)
+                    return@withContext MediatorResult.Success(endOfPaginationReached = true)
                 }
 
                 LoadType.APPEND -> {
+                    BasicUtils.log("NewsApp", "NewsRemoteMediator :: APPEND")
                     val lastItem = state.lastItemOrNull()
 
-                    // If Room is empty, there is nothing to append. (Refresh will handle empty states).
                     if (lastItem == null) {
-                        return MediatorResult.Success(endOfPaginationReached = true)
+                        return@withContext MediatorResult.Success(endOfPaginationReached = false)
                     }
 
-                    toDateIso = BasicUtils.parseTimestampLongToString(lastItem.lastUpdated)
+                    val toDateIso = BasicUtils.parseTimestampLongToString(lastItem.lastUpdated)
+                    BasicUtils.log(
+                        "NewsApp",
+                        "NewsRemoteMediator :: Loading older news before $toDateIso"
+                    )
+                    remoteManager.fetchNews(toDateIso)
                 }
             }
 
-            val freshArticles = if (toDateIso != null) {
-                Timber.d("Loading older news before $toDateIso")
-                remoteManager.fetchNews(toDateIso)
-            } else {
-                Timber.d("Loading latest news since $fromDateIso")
-                remoteManager.getLatestNews(fromDateIso)
-            }
+            localManager.insertArticles(freshArticles)
 
-            localManager.withTransaction {
-                localManager.insertArticles(freshArticles)
-            }
-
-            MediatorResult.Success(endOfPaginationReached = freshArticles.isEmpty())
+            val endOfPagination = freshArticles.isEmpty() && loadType == LoadType.APPEND
+            MediatorResult.Success(endOfPaginationReached = endOfPagination)
 
         } catch (e: IOException) {
-            Timber.e(e, "Error loading news")
+            BasicUtils.log("NewsApp", "NewsRemoteMediator :: Error loading news  msg: ${e.message}")
             MediatorResult.Error(e)
         } catch (e: HttpException) {
-            Timber.e(e, "HTTP error loading news")
+            BasicUtils.log(
+                "NewsApp",
+                "NewsRemoteMediator :: HTTP error loading news msg: ${e.message}"
+            )
             MediatorResult.Error(e)
         }
     }

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -61,6 +62,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.paging.common)
+    implementation(libs.kotlinx.serialization.json)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -87,9 +89,6 @@ dependencies {
 
     // Navigation
     implementation(libs.navigation.compose)
-
-    // Logging
-    implementation(libs.timber)
 
     // Testing
     testImplementation(libs.junit)
