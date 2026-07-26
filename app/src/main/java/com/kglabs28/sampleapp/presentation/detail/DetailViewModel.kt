@@ -26,7 +26,7 @@ class DetailViewModel @Inject constructor(
             typeMap = mapOf(typeOf<Article>() to Route.ArticleNavType)
         )
     } catch (e: Exception) {
-        // Fallback for tests or process death issues where arguments might be missing
+        BasicUtils.log("NewsApp","DetailViewModel :: exception = ${e.message}")
         null
     }
     

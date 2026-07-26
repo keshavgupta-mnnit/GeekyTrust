@@ -33,8 +33,6 @@ fun MainScreen(navController: NavHostController) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
             
-            // Show bottom bar on Feed and Bookmarks screens
-            // Note: with type-safe nav, the route name usually matches the FQN of the class
             val isFeed = currentDestination?.hierarchy?.any { it.route?.contains("Feed") == true } == true
             val isBookmark = currentDestination?.hierarchy?.any { it.route?.contains("Bookmarks") == true } == true
 

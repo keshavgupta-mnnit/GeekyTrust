@@ -44,14 +44,11 @@ class BookmarkUseCaseTest {
 
     @Test
     fun `getAll should return flow of bookmarked articles`() = runTest {
-        // Given
         val articles = listOf(testArticle.copy(bookmarkedAt = 123L))
         every { repository.getBookmarks() } returns flowOf(articles)
 
-        // When
         val result = bookmarkUseCase.getAll()
 
-        // Then
         result.collect {
             assertEquals(articles, it)
         }
@@ -60,15 +57,12 @@ class BookmarkUseCaseTest {
 
     @Test
     fun `toggle should add bookmark if not bookmarked`() = runTest {
-        // Given
         val article = testArticle.copy(bookmarkedAt = null)
         val articleSlot = slot<Article>()
         coEvery { repository.updateBookmark(capture(articleSlot)) } returns Unit
 
-        // When
         bookmarkUseCase.toggle(article)
 
-        // Then
         coVerify { repository.updateBookmark(any()) }
         assertNotNull(articleSlot.captured.bookmarkedAt)
         assertEquals(article.id, articleSlot.captured.id)
@@ -76,15 +70,12 @@ class BookmarkUseCaseTest {
 
     @Test
     fun `toggle should remove bookmark if already bookmarked`() = runTest {
-        // Given
         val article = testArticle.copy(bookmarkedAt = 123456789L)
         val articleSlot = slot<Article>()
         coEvery { repository.updateBookmark(capture(articleSlot)) } returns Unit
 
-        // When
         bookmarkUseCase.toggle(article)
 
-        // Then
         coVerify { repository.updateBookmark(any()) }
         assertNull(articleSlot.captured.bookmarkedAt)
         assertEquals(article.id, articleSlot.captured.id)

@@ -33,8 +33,6 @@ class NewsRemoteMediator(
         state: PagingState<Int, Article>
     ): MediatorResult = withContext(Dispatchers.IO) {
         try {
-            // GNews API free tier has a strict limit of 1 request per second.
-            // Paging 3 often triggers APPEND immediately after REFRESH.
             val currentTime = System.currentTimeMillis()
             val timeSinceLastRequest = currentTime - lastRequestTime
             if (timeSinceLastRequest < 1500) {
@@ -68,8 +66,6 @@ class NewsRemoteMediator(
                     BasicUtils.log("NewsApp", "NewsRemoteMediator :: APPEND")
                     val lastItem = state.lastItemOrNull()
 
-                    // If lastItem is null, it might be an initial load or empty DB.
-                    // We can't fetch "more" if we don't know where the "end" is.
                     if (lastItem == null) {
                         return@withContext MediatorResult.Success(endOfPaginationReached = false)
                     }

@@ -26,9 +26,9 @@ class NewsRepositoryImpl @Inject constructor(
         return Pager(
             config = PagingConfig(
                 pageSize = 10,
-                prefetchDistance = 3, // Start fetching local/remote earlier to ensure smooth scroll
+                prefetchDistance = 3,
                 enablePlaceholders = false,
-                initialLoadSize = 10 // Avoid triggering APPEND immediately on fresh launch
+                initialLoadSize = 10
             ),
             remoteMediator = NewsRemoteMediator(
                 remoteManager = remoteManager,

@@ -42,14 +42,11 @@ class BookmarkViewModelTest {
 
     @Test
     fun `bookmarks state should emit data from use case`() = runTest {
-        // Given
         val articles = listOf(testArticle)
         every { bookmarkUseCase.getAll() } returns flowOf(articles)
         
-        // Re-init to capture new flow
         viewModel = BookmarkViewModel(bookmarkUseCase)
 
-        // Then
         viewModel.bookmarks.test {
             assertEquals(articles, awaitItem())
         }
@@ -57,13 +54,10 @@ class BookmarkViewModelTest {
 
     @Test
     fun `onToggleBookmark should call use case toggle`() = runTest {
-        // Given
         coEvery { bookmarkUseCase.toggle(testArticle) } returns Unit
 
-        // When
         viewModel.onToggleBookmark(testArticle)
 
-        // Then
         coVerify { bookmarkUseCase.toggle(testArticle) }
     }
 }

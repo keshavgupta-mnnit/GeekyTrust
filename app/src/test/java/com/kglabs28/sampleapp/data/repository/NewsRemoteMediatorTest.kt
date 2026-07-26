@@ -50,7 +50,6 @@ class NewsRemoteMediatorTest {
 
     @Test
     fun `load REFRESH success should return Success`() = runTest {
-        // Given
         coEvery { localManager.getLatestTimestamp() } returns 1000L
         every { BasicUtils.parseTimestampLongToString(1000L) } returns "2023-10-27"
         coEvery { remoteManager.getLatestNews(any()) } returns listOf(testArticle)
@@ -63,10 +62,8 @@ class NewsRemoteMediatorTest {
             leadingPlaceholderCount = 0
         )
 
-        // When
         val result = mediator.load(LoadType.REFRESH, pagingState)
 
-        // Then
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertFalse((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
         coVerify { localManager.insertArticles(listOf(testArticle)) }
@@ -74,7 +71,6 @@ class NewsRemoteMediatorTest {
 
     @Test
     fun `load REFRESH empty should return Success with endOfPaginationReached`() = runTest {
-        // Given
         coEvery { localManager.getLatestTimestamp() } returns null
         coEvery { remoteManager.getLatestNews(null) } returns emptyList()
         coEvery { localManager.insertArticles(emptyList()) } returns Unit
@@ -86,17 +82,14 @@ class NewsRemoteMediatorTest {
             leadingPlaceholderCount = 0
         )
 
-        // When
         val result = mediator.load(LoadType.REFRESH, pagingState)
 
-        // Then
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertFalse((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
     }
 
     @Test
     fun `load APPEND success should return Success`() = runTest {
-        // Given
         val pagingState = PagingState<Int, Article>(
             pages = listOf(PagingSource.LoadResult.Page(listOf(testArticle), null, null)),
             anchorPosition = null,
@@ -107,10 +100,8 @@ class NewsRemoteMediatorTest {
         coEvery { remoteManager.fetchNews(any()) } returns listOf(testArticle.copy(id = "2"))
         coEvery { localManager.insertArticles(any()) } returns Unit
 
-        // When
         val result = mediator.load(LoadType.APPEND, pagingState)
 
-        // Then
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertFalse((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
         coVerify { remoteManager.fetchNews("2023-10-26") }
@@ -118,7 +109,6 @@ class NewsRemoteMediatorTest {
 
     @Test
     fun `load APPEND with no items should return Success`() = runTest {
-        // Given
         val pagingState = PagingState<Int, Article>(
             pages = emptyList(),
             anchorPosition = null,
@@ -126,10 +116,8 @@ class NewsRemoteMediatorTest {
             leadingPlaceholderCount = 0
         )
 
-        // When
         val result = mediator.load(LoadType.APPEND, pagingState)
 
-        // Then
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertFalse((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
         coVerify(exactly = 0) { remoteManager.fetchNews(any()) }
@@ -137,7 +125,6 @@ class NewsRemoteMediatorTest {
 
     @Test
     fun `load PREPEND should return Success with endOfPaginationReached true`() = runTest {
-        // Given
         val pagingState = PagingState<Int, Article>(
             pages = emptyList(),
             anchorPosition = null,
@@ -145,17 +132,14 @@ class NewsRemoteMediatorTest {
             leadingPlaceholderCount = 0
         )
 
-        // When
         val result = mediator.load(LoadType.PREPEND, pagingState)
 
-        // Then
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertTrue((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
     }
 
     @Test
     fun `load should return Error on IOException`() = runTest {
-        // Given
         coEvery { localManager.getLatestTimestamp() } throws IOException("No connection")
 
         val pagingState = PagingState<Int, Article>(
@@ -165,10 +149,8 @@ class NewsRemoteMediatorTest {
             leadingPlaceholderCount = 0
         )
 
-        // When
         val result = mediator.load(LoadType.REFRESH, pagingState)
 
-        // Then
         assertTrue(result is RemoteMediator.MediatorResult.Error)
         assertEquals("No connection", (result as RemoteMediator.MediatorResult.Error).throwable.message)
     }

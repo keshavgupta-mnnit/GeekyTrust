@@ -53,15 +53,12 @@ class RemoteManagerImplTest {
 
     @Test
     fun `getLatestNews should call newsApi and return articles`() = runTest {
-        // Given
         val timestamp = "2023-10-27T00:00:00Z"
         coEvery { newsApi.getLatestNews(latestTimeStamp = timestamp) } returns testNewsResponse
         every { BasicUtils.parseTimestampStringToLong(any()) } returns 123456789L
 
-        // When
         val result = remoteManager.getLatestNews(timestamp)
 
-        // Then
         assertEquals(1, result.size)
         assertEquals(testArticleDto.id, result[0].id)
         coVerify { newsApi.getLatestNews(latestTimeStamp = timestamp) }
@@ -69,15 +66,12 @@ class RemoteManagerImplTest {
 
     @Test
     fun `fetchNews should call newsApi and return articles`() = runTest {
-        // Given
         val timestamp = "2023-10-27T00:00:00Z"
         coEvery { newsApi.getMoreNews(oldestTimeStamp = timestamp) } returns testNewsResponse
         every { BasicUtils.parseTimestampStringToLong(any()) } returns 123456789L
 
-        // When
         val result = remoteManager.fetchNews(timestamp)
 
-        // Then
         assertEquals(1, result.size)
         assertEquals(testArticleDto.id, result[0].id)
         coVerify { newsApi.getMoreNews(oldestTimeStamp = timestamp) }
@@ -85,15 +79,12 @@ class RemoteManagerImplTest {
 
     @Test
     fun `searchNews should call newsApi and return articles`() = runTest {
-        // Given
         val query = "android"
         coEvery { newsApi.searchNews(query = query) } returns testNewsResponse
         every { BasicUtils.parseTimestampStringToLong(any()) } returns 123456789L
 
-        // When
         val result = remoteManager.searchNews(query)
 
-        // Then
         assertEquals(1, result.size)
         assertEquals(testArticleDto.id, result[0].id)
         coVerify { newsApi.searchNews(query = query) }

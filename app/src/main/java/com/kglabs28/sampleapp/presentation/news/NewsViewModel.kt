@@ -28,7 +28,6 @@ class NewsViewModel @Inject constructor(
     private val _searchQuery = mutableStateOf("")
     val searchQuery: State<String> = _searchQuery
 
-    // Single source of truth for the news data (Feed or Search)
     val news = snapshotFlow { _searchQuery.value }
         .debounce { query ->
             if (query.isBlank()) 0L else 500L

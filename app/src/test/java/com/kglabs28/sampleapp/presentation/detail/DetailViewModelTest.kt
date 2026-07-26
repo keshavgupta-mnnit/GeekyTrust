@@ -46,10 +46,8 @@ class DetailViewModelTest {
         mockkObject(BasicUtils)
         every { BasicUtils.log(any(), any()) } just Runs
         
-        // Construct with dummy handle
         viewModel = DetailViewModel(mockk(relaxed = true), bookmarkUseCase)
         
-        // Inject the article using reflection to bypass toRoute issues in unit tests
         val field = viewModel.javaClass.getDeclaredField("_article")
         field.isAccessible = true
         (field.get(viewModel) as MutableStateFlow<Article>).value = testArticle
@@ -67,15 +65,11 @@ class DetailViewModelTest {
 
     @Test
     fun `toggleBookmark should call use case and update local state`() = runTest {
-        // Given
         coEvery { bookmarkUseCase.toggle(any()) } returns Unit
 
-        // When
         viewModel.toggleBookmark()
 
-        // Then
         coVerify { bookmarkUseCase.toggle(any()) }
-        // The viewModel updates its local _article with a copy
         assertNotNull(viewModel.article.value.bookmarkedAt)
     }
 }

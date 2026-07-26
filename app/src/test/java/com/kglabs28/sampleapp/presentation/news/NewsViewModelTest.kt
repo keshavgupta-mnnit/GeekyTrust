@@ -55,7 +55,6 @@ class NewsViewModelTest {
 
     @Test
     fun `initial news flow should trigger execute when collected`() = runTest {
-        // We need to collect the flow AND advance time for the debounce
         val job = launch {
             viewModel.news.collect {}
         }
@@ -68,35 +67,27 @@ class NewsViewModelTest {
 
     @Test
     fun `onSearchQueryChange should trigger search after debounce`() = runTest {
-        // Given
         val query = "android"
         coEvery { getNewsUseCase.search(query) } returns listOf(testArticle)
 
-        // Start collecting
         val job = launch {
             viewModel.news.collect {}
         }
 
-        // When
         viewModel.onSearchQueryChange(query)
         
-        // Wait for debounce (500ms)
         advanceTimeBy(600)
 
-        // Then
         coVerify { getNewsUseCase.search(query) }
         job.cancel()
     }
 
     @Test
     fun `onToggleBookmark should call use case toggle`() = runTest {
-        // Given
         coEvery { bookmarkUseCase.toggle(testArticle) } returns Unit
 
-        // When
         viewModel.onToggleBookmark(testArticle)
 
-        // Then
         coVerify { bookmarkUseCase.toggle(testArticle) }
     }
 }

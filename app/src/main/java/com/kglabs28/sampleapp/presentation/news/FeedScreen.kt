@@ -34,21 +34,19 @@ fun FeedScreen(
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = viewModel::onSearchQueryChange,
-                    onSearch = { /* Handled automatically by debounce in ViewModel */ }
+                    onSearch = { }
                 )
             }
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when {
-                // 1. Initial Loading State (FullScreen)
                 news.loadState.refresh is LoadState.Loading && news.itemCount == 0 -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
 
-                // 2. Initial Error State (FullScreen)
                 news.loadState.refresh is LoadState.Error && news.itemCount == 0 -> {
                     ErrorScreen(
                         message = "No Internet Connection or Error Occurred",
@@ -57,7 +55,6 @@ fun FeedScreen(
                     )
                 }
 
-                // 3. Empty State (FullScreen)
                 news.loadState.refresh is LoadState.NotLoading && news.loadState.append.endOfPaginationReached && news.itemCount == 0 -> {
                     ErrorScreen(
                         message = "No articles found.",
@@ -66,11 +63,10 @@ fun FeedScreen(
                     )
                 }
 
-                // 4. Content State (Main List)
                 else -> {
                     PullToRefreshBox(
                         modifier = Modifier.fillMaxSize(),
-                        isRefreshing = news.loadState.refresh is LoadState.Loading, // Only true for pull-to-refresh when itemCount > 0
+                        isRefreshing = news.loadState.refresh is LoadState.Loading,
                         onRefresh = { news.refresh() }
                     ) {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -88,7 +84,6 @@ fun FeedScreen(
                                 }
                             }
 
-                            // Pagination loading/error items at the bottom
                             news.apply {
                                 if (loadState.append is LoadState.Loading) {
                                     item {

@@ -47,15 +47,12 @@ class NewsRepositoryImplTest {
 
     @Test
     fun `searchNews should call remoteManager when online`() = runTest {
-        // Given
         val query = "android"
         every { BasicUtils.isNetworkConnected(context) } returns true
         coEvery { remoteManager.searchNews(query) } returns listOf(testArticle)
 
-        // When
         val result = repository.searchNews(query)
 
-        // Then
         assertEquals(listOf(testArticle), result)
         coVerify { remoteManager.searchNews(query) }
         coVerify(exactly = 0) { localManager.searchLocalFeed(any()) }
@@ -63,15 +60,12 @@ class NewsRepositoryImplTest {
 
     @Test
     fun `searchNews should call localManager when offline`() = runTest {
-        // Given
         val query = "android"
         every { BasicUtils.isNetworkConnected(context) } returns false
         coEvery { localManager.searchLocalFeed(query) } returns listOf(testArticle)
 
-        // When
         val result = repository.searchNews(query)
 
-        // Then
         assertEquals(listOf(testArticle), result)
         coVerify { localManager.searchLocalFeed(query) }
         coVerify(exactly = 0) { remoteManager.searchNews(any()) }
@@ -79,60 +73,47 @@ class NewsRepositoryImplTest {
 
     @Test
     fun `searchNews should return empty list when remoteManager throws exception`() = runTest {
-        // Given
         val query = "android"
         every { BasicUtils.isNetworkConnected(context) } returns true
         coEvery { remoteManager.searchNews(query) } throws RuntimeException("Network error")
 
-        // When
         val result = repository.searchNews(query)
 
-        // Then
         assertEquals(emptyList<Article>(), result)
         coVerify { remoteManager.searchNews(query) }
     }
 
     @Test
     fun `getNews should return flow from pager`() {
-        // When
         val result = repository.getNews()
 
-        // Then
         assertNotNull(result)
     }
 
     @Test
     fun `enforceCacheLimit should call localManager`() = runTest {
-        // Given
         val limit = 100
         coEvery { localManager.enforceCacheLimit(limit) } returns Unit
 
-        // When
         repository.enforceCacheLimit(limit)
 
-        // Then
         coVerify { localManager.enforceCacheLimit(limit) }
     }
 
     @Test
     fun `updateBookmark should call localManager`() = runTest {
-        // Given
         coEvery { localManager.updateBookmarkStatus(testArticle) } returns Unit
 
-        // When
         repository.updateBookmark(testArticle)
 
-        // Then
         coVerify { localManager.updateBookmarkStatus(testArticle) }
     }
 
     @Test
     fun `getBookmarks should call localManager`() = runTest {
-        // Given
         val articles = listOf(testArticle)
         every { localManager.getBookmarkedArticles() } returns flowOf(articles)
 
-        // When & Then
         repository.getBookmarks().test {
             assertEquals(articles, awaitItem())
             awaitComplete()

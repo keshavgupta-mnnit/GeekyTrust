@@ -31,14 +31,11 @@ class GetNewsUseCaseTest {
 
     @Test
     fun `execute should return paging data from repository`() = runTest {
-        // Given
         val pagingData = PagingData.empty<Article>()
         every { repository.getNews() } returns flowOf(pagingData)
 
-        // When
         val result = getNewsUseCase.execute()
 
-        // Then
         result.collect {
             assertEquals(pagingData, it)
         }
@@ -47,7 +44,6 @@ class GetNewsUseCaseTest {
 
     @Test
     fun `search should return list of articles from repository`() = runTest {
-        // Given
         val query = "android"
         val articles = listOf(
             Article(
@@ -63,10 +59,8 @@ class GetNewsUseCaseTest {
         )
         coEvery { repository.searchNews(query) } returns articles
 
-        // When
         val result = getNewsUseCase.search(query)
 
-        // Then
         assertEquals(articles, result)
         coVerify { repository.searchNews(query) }
     }
