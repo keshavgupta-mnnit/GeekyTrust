@@ -21,15 +21,24 @@ class DetailViewModel @Inject constructor(
     private val bookmarkUseCase: BookmarkUseCase
 ) : ViewModel() {
 
-    private val detailRoute = savedStateHandle.toRoute<Route.Detail>(
-        typeMap = mapOf(typeOf<Article>() to Route.ArticleNavType)
-    )
+    private val detailRoute = try {
+        savedStateHandle.toRoute<Route.Detail>(
+            typeMap = mapOf(typeOf<Article>() to Route.ArticleNavType)
+        )
+    } catch (e: Exception) {
+        // Fallback for tests or process death issues where arguments might be missing
+        null
+    }
     
-    private val _article = MutableStateFlow<Article>(detailRoute.article)
+    private val _article = MutableStateFlow<Article>(detailRoute?.article ?: Article(
+        id = "", title = "", description = "", content = "", imageUrl = "", url = "", sourceName = "", lastUpdated = 0L
+    ))
     val article = _article.asStateFlow()
 
     init {
-        BasicUtils.log("NewsApp", "Displaying article detail for: ${detailRoute.article.title}")
+        detailRoute?.let {
+            BasicUtils.log("NewsApp", "Displaying article detail for: ${it.article.title}")
+        }
     }
 
     fun toggleBookmark() {

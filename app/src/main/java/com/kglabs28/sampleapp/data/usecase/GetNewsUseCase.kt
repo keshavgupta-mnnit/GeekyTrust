@@ -7,9 +7,10 @@ import com.kglabs28.sampleapp.utils.BasicUtils
 import kotlinx.coroutines.flow.Flow
 
 class GetNewsUseCase(private val repository: NewsRepository) {
-    fun execute(): Flow<PagingData<Article>>{
+    fun execute(): Flow<PagingData<Article>> {
         BasicUtils.log("NewsApp", "GetNewsUseCase getNews called")
         return repository.getNews()
     }
+
     suspend fun search(query: String): List<Article> = repository.searchNews(query)
 }
