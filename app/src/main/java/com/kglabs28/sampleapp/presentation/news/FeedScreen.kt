@@ -18,6 +18,7 @@ import com.kglabs28.sampleapp.presentation.components.ErrorScreen
 import com.kglabs28.sampleapp.presentation.components.NewsItem
 import com.kglabs28.sampleapp.presentation.components.SearchBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreen(
     onArticleClick: (Article) -> Unit,
@@ -28,11 +29,14 @@ fun FeedScreen(
 
     Scaffold(
         topBar = {
-            SearchBar(
-                query = searchQuery,
-                onQueryChange = viewModel::onSearchQueryChange,
-                onSearch = { /* Handled automatically by debounce in ViewModel */ }
-            )
+            Column {
+                TopAppBar(title = { Text("News Feed") })
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = viewModel::onSearchQueryChange,
+                    onSearch = { /* Handled automatically by debounce in ViewModel */ }
+                )
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {

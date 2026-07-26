@@ -30,7 +30,9 @@ class NewsViewModel @Inject constructor(
 
     // Single source of truth for the news data (Feed or Search)
     val news = snapshotFlow { _searchQuery.value }
-        .debounce(500L)
+        .debounce { query ->
+            if (query.isBlank()) 0L else 500L
+        }
         .distinctUntilChanged()
         .flatMapLatest { query ->
             if (query.isBlank()) {
